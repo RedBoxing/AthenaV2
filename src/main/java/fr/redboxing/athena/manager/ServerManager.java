@@ -59,4 +59,22 @@ public class ServerManager {
             return addresses;
         }
     }
+
+    // get a server with one of the player
+    public static Optional<Server> getServerByPlayer(String username) {
+        try(Session session = DatabaseManager.getSessionFactory().openSession()) {
+            session.beginTransaction();
+
+            CriteriaBuilder builder = session.getCriteriaBuilder();
+            CriteriaQuery<Server> criteriaQuery = builder.createQuery(Server.class);
+            Root<Server> root = criteriaQuery.from(Server.class);
+            criteriaQuery.select(root);
+
+            CriteriaQuery<Server> query = criteriaQuery.where(builder.like(root.get("players"), username));
+            Optional<Server> server = session.createQuery(query).uniqueResultOptional();
+            session.getTransaction().commit();
+
+            return server;
+        }
+    }
 }

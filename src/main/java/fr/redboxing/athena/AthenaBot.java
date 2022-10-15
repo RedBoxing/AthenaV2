@@ -13,6 +13,7 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.Compression;
@@ -145,27 +146,11 @@ public class AthenaBot {
             LOGGER.error("Server " + address + " is offline !");
         }
 
-        Server server = ServerManager.getServerByAddress(address).orElse(null);
+        Optional<Server> optionalServer = ServerManager.getServerByAddress(address);
+        Server server = optionalServer.orElse(new Server());
+        server.setAddress(address);
 
         if(data != null) {
-            if(server == null) {
-                EmbedBuilder builder = new EmbedBuilder();
-                builder.setAuthor("New server found !", this.jda.getSelfUser().getAvatarUrl());
-                builder.addField("Address:", address, true);
-                builder.addField("Version:", data.getVersion().getName(), true);
-                builder.addField("ModLoader:", "VANILLA", true);
-                builder.addField("Players:", data.getPlayers().getOnline() + "/" + data.getPlayers().getMax(), true);
-                if(!data.getDescription().getText().isEmpty()) builder.addField("Description:", "```" + data.getDescription().getText().replaceAll(MC_COLOR_REGEX, "") + "```", false);
-                if(data.getPlayers().getOnline() > 0 && data.getPlayers().getSample().size() > 0) builder.addField("Online Players:", "```" + data.getPlayers().getSample().stream().map(plr -> plr.getName().replaceAll(MC_COLOR_REGEX, "")).collect(Collectors.joining("\n")) + "```", false);
-                builder.setColor(new Color(52, 152, 219));
-                builder.setFooter("Project Athena V2 by RedBoxing", this.jda.getGuildById(BotConfig.get("BOT_GUILD")).getMemberById(BotConfig.get("AUTHOR_ID")).getAvatarUrl());
-
-                this.jda.getTextChannelById("909273013898346516").sendMessageEmbeds(builder.build()).queue();
-
-                server = new Server();
-                server.setAddress(address);
-            }
-
             server.setDescription(Base64.getEncoder().encodeToString(data.getDescription().getText().replaceAll(MC_COLOR_REGEX, "").getBytes(StandardCharsets.UTF_8)));
             server.setVersion(data.getVersion().getName());
             server.setOnlinePlayers(data.getPlayers().getOnline());
@@ -174,14 +159,33 @@ public class AthenaBot {
             server.setModLoader("VANILLA");
             server.setOnline(true);
             server.setLastOnline(System.currentTimeMillis());
-        } else if(server != null) {
+        } else if(optionalServer.isPresent()) {
             server.setOnline(false);
             server.setLastOnline(System.currentTimeMillis());
         }
 
-        if(server != null) {
+        if(optionalServer.isEmpty()) {
+            this.jda.getTextChannelById("909273013898346516").sendMessageEmbeds(this.generateServerEmbed("New server found !", server)).queue();
+        }
+
+        if(data != null || optionalServer.isPresent()) {
             DatabaseManager.save(server);
         }
+    }
+
+    public MessageEmbed generateServerEmbed(String title, Server server) {
+        EmbedBuilder builder = new EmbedBuilder();
+        builder.setAuthor(title, null, this.jda.getSelfUser().getAvatarUrl());
+        builder.addField("Address:", server.getAddress(), true);
+        builder.addField("Version:", server.getVersion(), true);
+        builder.addField("ModLoader:", "VANILLA", true);
+        builder.addField("Players:", server.getOnlinePlayers() + "/" + server.getMaxPlayers(), true);
+        if(!server.getDescription().isEmpty()) builder.addField("Description:", "```" + server.getDescription() + "```", false);
+        String[] players = server.getPlayers().split(";");
+        if(server.getOnlinePlayers() > 0 && players.length > 0) builder.addField("Online Players:", "```" + String.join("\n", players) + "```", false);
+        builder.setColor(new Color(52, 152, 219));
+
+        return builder.build();
     }
 
     private void scan(String portRange) {
