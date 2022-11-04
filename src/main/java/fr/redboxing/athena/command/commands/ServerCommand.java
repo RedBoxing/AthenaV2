@@ -9,6 +9,7 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 
+import java.util.List;
 import java.util.Optional;
 
 public class ServerCommand extends AbstractCommand {
@@ -26,9 +27,9 @@ public class ServerCommand extends AbstractCommand {
         String address = event.getOption("address").getAsString();
         event.deferReply().queue(hook -> {
             this.bot.refresh(address);
-            Optional<Server> server = ServerManager.getServerByAddress(address);
-            if(server.isPresent()) {
-                hook.editOriginalEmbeds(this.bot.generateServerEmbed("Server informations", server.get())).queue();
+            List<Server> server = ServerManager.getServerByAddress(address);
+            if(server.size() > 0) {
+                hook.editOriginalEmbeds(this.bot.generateServerEmbed("Server informations", server.get(0))).queue();
             } else {
                 hook.editOriginal("Server could not be found !").queue();
             }

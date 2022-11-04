@@ -45,8 +45,9 @@ dependencies {
     implementation group: 'org.reflections', name: 'reflections', version: '0.10.2'
     implementation group: 'io.github.cdimascio', name: 'java-dotenv', version: '5.1.1'
     implementation group: 'com.zaxxer', name: 'HikariCP', version: '5.0.0'
-    implementation group: 'org.hibernate', name: 'hibernate-core', version: '5.6.5.Final'
-    implementation group: 'org.hibernate', name: 'hibernate-hikaricp', version: '5.6.5.Final'
+    implementation group: 'io.prometheus', name: 'simpleclient', version: '0.16.0'
+    implementation group: 'io.prometheus', name: 'simpleclient_httpserver', version: '0.16.0'
+    implementation group: 'com.maxmind.geoip2', name: 'geoip2', version: '3.0.2'
 
     compileOnly 'org.projectlombok:lombok:1.18.24'
     annotationProcessor 'org.projectlombok:lombok:1.18.24'

@@ -14,15 +14,18 @@ public class ScanCommand extends AbstractCommand {
         this.name = "scan";
         this.category = CommandCategory.MISCS;
         this.help = "Start a scan if there is no pending scan.";
-        this.options.add(new OptionData(OptionType.STRING, "port", "The port range to scan", true));
+        this.options.add(new OptionData(OptionType.STRING, "ip-range", "The range of the scan", false));
+        this.options.add(new OptionData(OptionType.STRING, "port-range", "The port range to scan", false));
     }
 
     @Override
     protected void execute(SlashCommandInteractionEvent event) {
-        if(this.bot.start(event.getOption("port").getAsString())) {
-            event.reply("Scan started.").queue();
-        } else {
-            event.reply("There is already a scan in progress.").queue();
-        }
+        event.deferReply().queue(hook -> {
+            if(this.bot.start(event.getOption("ip-range") == null ? "0.0.0.0/0" : event.getOption("ip-range").getAsString(), event.getOption("port-range") == null ? "0-65535" : event.getOption("port-range").getAsString())) {
+                hook.editOriginal("Scan started.").queue();
+            } else {
+                hook.editOriginal("There is already a scan in progress.").queue();
+            }
+        });
     }
 }

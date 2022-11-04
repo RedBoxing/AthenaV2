@@ -45,7 +45,7 @@ public class EventListener extends ListenerAdapter {
             LOGGER.info("Registered {} commands !", cmds.size());
         });
 
-        this.bot.getScheduler().scheduleAtFixedRate(() -> this.bot.refreshDatabase(), 10, 10, TimeUnit.MINUTES);
+        this.bot.getScheduler().scheduleAtFixedRate(() -> this.bot.refreshDatabase(), 0, 10, TimeUnit.MINUTES);
         this.bot.getScheduler().scheduleAtFixedRate(() -> this.bot.getJda().getPresence().setActivity(Activity.playing(ServerManager.getTotalServerCounts() + " scanned servers !")), 0, 10, TimeUnit.MINUTES);
     }
 }

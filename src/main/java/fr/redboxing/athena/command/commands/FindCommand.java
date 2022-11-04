@@ -9,6 +9,7 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 
+import java.util.List;
 import java.util.Optional;
 
 public class FindCommand extends AbstractCommand {
@@ -16,19 +17,50 @@ public class FindCommand extends AbstractCommand {
         super(bot);
 
         this.name = "find";
-        this.help = "Find a player is the server database";
+        this.help = "Find a server database";
         this.category = CommandCategory.MISCS;
-        this.options.add(new OptionData(OptionType.STRING, "username", "The username of the player", true));
+        this.options.add(new OptionData(OptionType.STRING, "target", "What to search for", true)
+                .addChoice("IP (ip:port)", "ip")
+                .addChoice("Description (contains)", "description")
+                .addChoice("Player (username or UUID)", "player")
+        );
+
+        this.options.add(new OptionData(OptionType.STRING, "value", "The value to search", true));
     }
 
     @Override
     protected void execute(SlashCommandInteractionEvent event) {
-        String username = event.getOption("username").getAsString();
-        Optional<Server> server = ServerManager.getServerByPlayer(username);
-        if(server.isPresent()) {
-            event.replyEmbeds(this.bot.generateServerEmbed("Player " + username + " found !", server.get())).queue();
-        } else {
-            event.reply("Player " + username + " not found !").queue();
+        switch (event.getOption("target").getAsString()) {
+            case "ip" -> {
+                List<Server> servers = ServerManager.getServerByAddress(event.getOption("value").getAsString());
+                if(servers.size() > 0) {
+                    event.reply("Found " + servers.size() + " server(s) with the IP " + event.getOption("value").getAsString()).queue(hook -> {
+                        hook.editOriginalEmbeds(servers.stream().map(server -> this.bot.generateServerEmbed("Found server : " + server.getHost() + ":" + server.getPort(), server)).toList()).queue();
+                    });
+                } else {
+                    event.reply("Server not found.").queue();
+                }
+            }
+            case "description" -> {
+                List<Server> servers = ServerManager.getServerByDescription(event.getOption("value").getAsString());
+                if(servers.size() > 0) {
+                    event.reply("Found " + servers.size() + " server(s) with the IP " + event.getOption("value").getAsString()).queue(hook -> {
+                        hook.editOriginalEmbeds(servers.stream().map(server -> this.bot.generateServerEmbed("Found server : " + server.getHost() + ":" + server.getPort(), server)).toList()).queue();
+                    });
+                } else {
+                    event.reply("Server not found.").queue();
+                }
+            }
+            case "player" -> {
+                List<Server> servers = ServerManager.getServerByPlayer(event.getOption("value").getAsString());
+                if(servers.size() > 0) {
+                    event.reply("Found " + servers.size() + " server(s) with the IP " + event.getOption("value").getAsString()).queue(hook -> {
+                        hook.editOriginalEmbeds(servers.stream().map(server -> this.bot.generateServerEmbed("Found player : " + event.getOption("value").getAsString(), server)).toList()).queue();
+                    });
+                } else {
+                    event.reply("Player not found.").queue();
+                }
+            }
         }
     }
 }
